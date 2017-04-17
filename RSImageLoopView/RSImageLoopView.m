@@ -84,7 +84,14 @@ static NSString * const reuseIdentifierID = @"Cell";
 }
 
 #pragma mark 接受用户点击
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+- (void)addTarget:(id)target action:(SEL)action {
+    
+    _target = target;
+    self.sel = action;
+}
+
+- (void)tap {
+    
     if (_sel) {
         SEL selector = _sel;
         IMP imp = [_target methodForSelector:selector];
@@ -92,13 +99,6 @@ static NSString * const reuseIdentifierID = @"Cell";
         func(_target, selector);
     }
 }
-
-- (void)addTarget:(id)target action:(SEL)action {
-    
-    _target = target;
-    self.sel = action;
-}
-
 #pragma mark 懒加载和图片属性
 - (UICollectionView *)collectionView
 {
@@ -121,7 +121,10 @@ static NSString * const reuseIdentifierID = @"Cell";
             
             collectionView.dataSource = self;
             collectionView.delegate = self;
-            collectionView.userInteractionEnabled = NO;
+            
+            // 添加点按手势
+            UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(tap)];
+            [collectionView addGestureRecognizer:tapGestureRecognizer];
             
             _collectionView = collectionView;
             collectionView;
@@ -197,7 +200,6 @@ static NSString * const reuseIdentifierID = @"Cell";
 
 - (void)nextpage {
     NSIndexPath *currentIndexPath = [[self.collectionView indexPathsForVisibleItems] lastObject];
-    
     NSIndexPath *currentIndexPathReset = [NSIndexPath indexPathForItem:currentIndexPath.item inSection:50];
     [self.collectionView scrollToItemAtIndexPath:currentIndexPathReset atScrollPosition:UICollectionViewScrollPositionLeft animated:NO];
     
@@ -247,7 +249,6 @@ static NSString * const reuseIdentifierID = @"Cell";
 #pragma mark 当用户停止的时候调用
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     [self addTimerWithTimeInterval:self.timeInterval];
-    
 }
 
 #pragma mark 设置页码
