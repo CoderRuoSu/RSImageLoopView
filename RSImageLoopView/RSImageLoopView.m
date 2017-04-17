@@ -9,6 +9,7 @@
 #import "RSImageLoopView.h"
 
 #define SCREEN_WIDTH ([[UIScreen mainScreen] bounds].size.width)
+static NSString * const reuseIdentifierID = @"Cell";
 
 @interface RSImageLoopView ()<UICollectionViewDataSource,UICollectionViewDelegate>
 
@@ -31,18 +32,17 @@
 
 @end
 
+
 @implementation RSImageLoopView
 
-static NSString * const reuseIdentifierID = @"Cell";
-
 // 在所属控制器dealloc或者viewwilldisappear中调用
-- (void)stopTimer{
+- (void)stopTimer {
     [self removeTimer];
 }
 
-#pragma mark 类工厂快速创建
-+ (instancetype)imageLoopViewWithImageArray:(NSArray *)imageArray frame:(CGRect)frame timeInterval:(NSTimeInterval)timeInterval{
-    
+#pragma mark 类工厂和构造方法
++ (instancetype)imageLoopViewWithImageArray:(NSArray *)imageArray frame:(CGRect)frame timeInterval:(NSTimeInterval)timeInterval
+{
     RSImageLoopView *imageLoopView = [[RSImageLoopView alloc]init];
     // 属性赋值
     imageLoopView.frame = frame;
@@ -55,8 +55,22 @@ static NSString * const reuseIdentifierID = @"Cell";
     return imageLoopView;
 }
 
+- (instancetype)initWithImageArray:(NSArray *)imageArray frame:(CGRect)frame timeInterval:(NSTimeInterval)timeInterval
+{
+    if (self = [super init]) {
+        // 属性赋值
+        self.frame = frame;
+        self.timeInterval = timeInterval;
+        self.imageArray = imageArray;
+        
+        // 初始化view
+        [self initView];
+    }
+    
+    return self;
+}
 // 初始化view
-- (void)initView{
+- (void)initView {
     
     // 添加子控件,推荐使用懒加载
     [self addSubview:self.collectionView];
@@ -70,7 +84,7 @@ static NSString * const reuseIdentifierID = @"Cell";
 }
 
 #pragma mark 接受用户点击
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     if (_sel) {
         SEL selector = _sel;
         IMP imp = [_target methodForSelector:selector];
@@ -79,7 +93,7 @@ static NSString * const reuseIdentifierID = @"Cell";
     }
 }
 
-- (void)addTarget:(id)target action:(SEL)action{
+- (void)addTarget:(id)target action:(SEL)action {
     
     _target = target;
     self.sel = action;
@@ -108,7 +122,9 @@ static NSString * const reuseIdentifierID = @"Cell";
             collectionView.dataSource = self;
             collectionView.delegate = self;
             collectionView.userInteractionEnabled = NO;
+            
             _collectionView = collectionView;
+            collectionView;
         });
         
     }
@@ -117,7 +133,7 @@ static NSString * const reuseIdentifierID = @"Cell";
 
 - (UIPageControl *)pageControl
 {
-    if(!_pageControl){
+    if (!_pageControl) {
         
         UIPageControl *pageControl = ({
             pageControl = [[UIPageControl alloc] init];
@@ -131,20 +147,21 @@ static NSString * const reuseIdentifierID = @"Cell";
             pageControl.numberOfPages = self.imageArray.count;
             
             _pageControl=pageControl;
+            pageControl;
         });
         
     }
     return _pageControl;
 }
 
-- (NSArray *)imageViewArray{
+- (NSArray *)imageViewArray {
     if (_imageViewArray == nil) {
         _imageViewArray = [NSArray array];
     }
     return _imageViewArray;
 }
 
-- (void)setImageArray:(NSArray *)imageArray{
+- (void)setImageArray:(NSArray *)imageArray {
     
     _imageArray = imageArray;
     
@@ -158,14 +175,14 @@ static NSString * const reuseIdentifierID = @"Cell";
     self.imageViewArray = arrM;
 }
 
-- (NSUInteger)visibleImageIndex{
+- (NSUInteger)visibleImageIndex {
     NSIndexPath *currentIndexPath = [[self.collectionView indexPathsForVisibleItems] lastObject];
     return currentIndexPath.row;
 }
 
 #pragma mark 添加定时器
-- (void)addTimerWithTimeInterval:(NSTimeInterval)timeInterval{
-    
+- (void)addTimerWithTimeInterval:(NSTimeInterval)timeInterval
+{
     NSTimer *timer = [NSTimer timerWithTimeInterval:timeInterval target:self selector:@selector(nextpage) userInfo:nil repeats:YES];
     [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
     self.timer = timer ;
@@ -173,12 +190,12 @@ static NSString * const reuseIdentifierID = @"Cell";
 }
 
 #pragma mark 删除定时器
-- (void)removeTimer{
+- (void)removeTimer {
     [self.timer invalidate];
     self.timer = nil;
 }
 
-- (void)nextpage{
+- (void)nextpage {
     NSIndexPath *currentIndexPath = [[self.collectionView indexPathsForVisibleItems] lastObject];
     
     NSIndexPath *currentIndexPathReset = [NSIndexPath indexPathForItem:currentIndexPath.item inSection:50];
@@ -214,46 +231,45 @@ static NSString * const reuseIdentifierID = @"Cell";
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifierID forIndexPath:indexPath];
     UIImageView *imageView = self.imageViewArray[indexPath.item];
     
-    
     [cell.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [cell.contentView addSubview:imageView];
-
+    
     return cell;
 }
 
 
 #pragma mark <UICollectionViewDelegate>
 
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
     [self removeTimer];
 }
 
 #pragma mark 当用户停止的时候调用
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate{
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     [self addTimerWithTimeInterval:self.timeInterval];
     
 }
 
 #pragma mark 设置页码
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     int page = (int) (scrollView.contentOffset.x/scrollView.frame.size.width+0.5)%self.imageViewArray.count;
     self.pageControl.currentPage =page;
 }
 
 #pragma mark pageControl的相关属性
-- (void)setPageIndicatorTintColor:(UIColor *)pageIndicatorTintColor{
+- (void)setPageIndicatorTintColor:(UIColor *)pageIndicatorTintColor {
     self.pageControl.pageIndicatorTintColor = pageIndicatorTintColor;
 }
 
-- (void)setCurrentPageIndicatorTintColor:(UIColor *)currentPageIndicatorTintColor{
+- (void)setCurrentPageIndicatorTintColor:(UIColor *)currentPageIndicatorTintColor {
     self.pageControl.currentPageIndicatorTintColor = currentPageIndicatorTintColor;
 }
 
-- (void)setPageControlSize:(CGSize)pageControlSize{
+- (void)setPageControlSize:(CGSize)pageControlSize {
     self.pageControl.bounds = CGRectMake(0, 0, pageControlSize.width, pageControlSize.height);
 }
 
-- (void)setPageControlCenter:(CGPoint)pageControlCenter{
+- (void)setPageControlCenter:(CGPoint)pageControlCenter {
     self.pageControlCenter = pageControlCenter;
 }
 

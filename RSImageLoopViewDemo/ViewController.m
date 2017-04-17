@@ -19,33 +19,46 @@
  必须要实现,不然会有内存泄漏,轮播器释放不了,也可在viewwilldisappear实现
  具体原因见简书博客:http://www.jianshu.com/u/4f7decfc7fb4
  */
-- (void)dealloc{
+- (void)dealloc {
     [self.imageLoopView stopTimer];
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    NSArray *imageArray = [self getImageArry];
+    [self initImageLoopView2];
     
-    // 01 创建RSImageLoopView对象
-    RSImageLoopView *imageLoopView = [RSImageLoopView imageLoopViewWithImageArray:imageArray frame:CGRectMake(0, 0, SCREEN_WIDTH, 200) timeInterval:1];
-    self.imageLoopView  = imageLoopView;
-    [self.view addSubview:imageLoopView];
+//    // 01 创建RSImageLoopView对象
+//    NSArray *imageArray = [self getImageArry];
+//    
+//    RSImageLoopView *imageLoopView = [RSImageLoopView imageLoopViewWithImageArray:imageArray frame:CGRectMake(0, 0, SCREEN_WIDTH, 200) timeInterval:1];
+//    self.imageLoopView  = imageLoopView;
+//    [self.view addSubview:imageLoopView];
     
     // 02 添加点击事件需要执行的方法
-    [imageLoopView addTarget:self action:@selector(clickLoopView)];
+    [self.imageLoopView addTarget:self action:@selector(clickLoopView)];
+    
 }
 
 // 实现点击方法
-- (void)clickLoopView{
+- (void)clickLoopView {
     // 获取点击轮播器需要的参数(点击的图片索引) 此时一般push或modal新的控制器
     NSUInteger index = self.imageLoopView.visibleImageIndex;
     NSLog(@"点击了第%ld张图片",index);
 }
 
+// 构造方法创建
+- (void)initImageLoopView2 {
+    
+    NSArray *imageArray = [self getImageArry];
+    RSImageLoopView *imageLoopView = [[RSImageLoopView alloc]initWithImageArray:imageArray frame:CGRectMake(0, 0, SCREEN_WIDTH, 200)  timeInterval:1];
+    self.imageLoopView  = imageLoopView;
+    [self.view addSubview:imageLoopView];
+    
+}
+
 // 获取图片数组
-- (NSArray *)getImageArry{
+- (NSArray *)getImageArry {
     
     NSMutableArray *imageArray = [NSMutableArray array];
     for (int i = 1; i <= 5; i++) {
@@ -54,6 +67,5 @@
     }
     return imageArray;
 }
-
 
 @end
